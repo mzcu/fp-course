@@ -41,6 +41,7 @@ library
                       -fno-warn-unused-do-bind
                       -fno-warn-unused-imports
                       -fno-warn-type-defaults
+                      -fno-max-relevant-binds
                       -ferror-spans
 
   default-extensions: NoImplicitPrelude

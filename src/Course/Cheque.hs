@@ -187,7 +187,7 @@ data Digit =
   | Seven
   | Eight
   | Nine
-  deriving (Eq, Ord)
+  deriving (Eq, Ord, Show)
 
 showDigit ::
   Digit
@@ -218,7 +218,7 @@ data Digit3 =
   D1 Digit
   | D2 Digit Digit
   | D3 Digit Digit Digit
-  deriving Eq
+  deriving (Eq, Show)
 
 -- Possibly convert a character to a digit.
 fromChar ::
@@ -323,5 +323,69 @@ fromChar _ =
 dollars ::
   Chars
   -> Chars
-dollars =
-  error "todo: Course.Cheque#dollars"
+dollars x = let ds = takeDollars x
+                cs = takeCents x
+                dollarDigits = digit3 $ (sequence $ fromChar <$> ds) ?? (Zero :. Nil)
+		dollarAmount = reverse $ zipWith (\a b ->
+							case a of
+							   D3 Zero Zero Zero -> ""
+							   _ -> showDigit3 a ++ if length b > 0 then " " ++ b else ""
+						  ) dollarDigits illion
+		dollarAmount' = let amount = joinToString " " $ filter (not.isEmpty) dollarAmount
+				    in if amount == "" then "zero" else amount
+		dollarPart = dollarAmount' ++ if dollarAmount' == "one" then " dollar" else " dollars"
+		centPart = case listOptional fromChar cs of
+				Nil -> "zero cents"
+				(Zero :. One :. Nil) -> "one cent"
+				(d :. Nil) -> showDigit3 (D3 Zero d Zero) ++ " cents"
+				(d1 :. d2 :. _) -> showDigit3 (D2 d1 d2) ++ " cents"
+		in dollarPart ++ " and " ++ centPart
+
+        
+
+
+                
+takeDollars xs = filter isDigit $ takeWhile (/= '.') xs
+takeCents xs = filter isDigit $ dropWhile (/= '.') xs
+
+
+startsWith :: Chars -> Chars -> Bool
+startsWith x s = take (length x) s == x
+
+joinToString :: Chars -> List Chars -> Chars
+joinToString sep xs = foldLeft (\a b -> if a == "" then b else a ++ sep ++ b) "" xs
+
+digit3 :: List Digit -> List Digit3
+digit3 xs = digit3' $ reverse xs
+        where
+            digit3' Nil = Nil
+            digit3' (d1 :. d2 :. d3 :. ds) = D3 d3 d2 d1 :. digit3' ds
+            digit3' (d1 :. d2 :. ds) = D2 d2 d1 :. digit3' ds
+            digit3' (d1 :. ds) = D1 d1 :. digit3' ds
+
+
+showDigit3 :: Digit3 -> Chars
+showDigit3 (D1 x) = showDigit x
+showDigit3 (D2 Zero x) = showDigit3 $ D1 x
+showDigit3 (D2 One Zero) = "ten"
+showDigit3 (D2 One One) = "eleven"
+showDigit3 (D2 One Two) = "twelve"
+showDigit3 (D2 One Three) = "thirteen"
+showDigit3 (D2 One Four) = "fourteen"
+showDigit3 (D2 One Five) = "fifteen"
+showDigit3 (D2 One Six) = "sixteen"
+showDigit3 (D2 One Seven) = "seventeen"
+showDigit3 (D2 One Eight) = "eighteen"
+showDigit3 (D2 One Nine) = "nineteen"
+showDigit3 (D2 Two Zero) =  "twenty"
+showDigit3 (D2 Three Zero) =  "thirty"
+showDigit3 (D2 Four Zero) =  "forty"
+showDigit3 (D2 Five Zero) =  "fifty"
+showDigit3 (D2 Six Zero) =  "sixty"
+showDigit3 (D2 Seven Zero) =  "seventy"
+showDigit3 (D2 Eight Zero) =  "eighty"
+showDigit3 (D2 Nine Zero) =  "ninety"
+showDigit3 (D2 d x) =  showDigit3 (D2 d Zero) ++ "-" ++ showDigit3 (D1 x)
+showDigit3 (D3 Zero x y) = showDigit3 $ D2 x y 
+showDigit3 (D3 h Zero Zero) = showDigit3 (D1 h) ++  " hundred"
+showDigit3 (D3 h x y) = showDigit h ++" hundred and " ++ showDigit3 (D2 x y)

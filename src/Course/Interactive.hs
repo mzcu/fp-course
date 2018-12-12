@@ -12,6 +12,8 @@ import Course.Traversable
 import Course.List
 import Course.Optional
 
+import Debug.Trace
+
 -- | Eliminates any value over which a functor is defined.
 vooid ::
   Functor m =>
@@ -82,8 +84,10 @@ data Op =
 -- /Tip:/ @putStrLn :: String -> IO ()@ -- Prints a string and then a new line to standard output.
 convertInteractive ::
   IO ()
-convertInteractive =
-  error "todo: Course.Interactive#convertInteractive"
+convertInteractive = do
+                putStr "Enter a string to convert to upper-case: "
+                getLine >>= return . (toUpper <$>) >>= putStrLn
+
 
 -- |
 --
@@ -110,8 +114,14 @@ convertInteractive =
 -- /Tip:/ @putStrLn :: String -> IO ()@ -- Prints a string and then a new line to standard output.
 reverseInteractive ::
   IO ()
-reverseInteractive =
-  error "todo: Course.Interactive#reverseInteractive"
+reverseInteractive = do
+                putStr "Enter a file name to reverse: "
+                fileName <- getLine
+                putStr "Enter a destination file name: "
+                destName <- getLine
+                contents <- reverse <$> readFile fileName
+                writeFile destName contents
+
 
 -- |
 --
@@ -136,8 +146,16 @@ reverseInteractive =
 -- /Tip:/ @putStrLn :: String -> IO ()@ -- Prints a string and then a new line to standard output.
 encodeInteractive ::
   IO ()
-encodeInteractive =
-  error "todo: Course.Interactive#encodeInteractive"
+encodeInteractive = do
+                putStr "Enter a string to url-encode: "
+                encoded <- foldLeft (++) "" . (encode <$>) <$> getLine
+                putStrLn encoded
+                    where encode ' ' = "%20"
+                          encode '\t' = "%09"
+                          encode '\"' = "%22"
+                          encode c = c :. Nil
+
+                
 
 interactive ::
   IO ()
